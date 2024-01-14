@@ -55,13 +55,13 @@ This Python script is using BPF (Berkley Packet Filter) to trace the delay of ne
 
 Here's a breakdown of the code:
 
-1.Import BPF from bcc:
+1. Import BPF from bcc:
 
 ```python
 from bcc import BPF
 ```
 
-2.Define the BPF program:
+2. Define the BPF program:
 
 ```python
 bpf_code = """
@@ -78,7 +78,7 @@ BPF_HASH(start, struct sk_buff *);
 ```
 The BPF program includes necessary kernel headers and defines a data structure (`struct metadata`) and a BPF hash map (`start`) to store the timestamps of packet receptions.
 
-3.Define kprobe functions:
+3. Define kprobe functions:
 
 -`kprobe__eth_type_trans`: Traces the entry point of the `eth_type_trans` function and prints the delay from interface to the data link layer.
 
@@ -180,13 +180,13 @@ int kprobe_tcp_data_queue(struct pt_regs *ctx, struct sock *sk, struct sk_buff *
 """
 ```
 
-4.Load the BPF program:
+4. Load the BPF program:
 
 ```python
 bpf = BPF(text=bpf_code)
 ```
 
-5.Attach kprobes:
+5. Attach kprobes:
 
 ```python
 bpf.attach_kprobe(event="eth_type_trans", fn_name="kprobe__eth_type_trans")
@@ -196,7 +196,7 @@ bpf.attach_kretprobe(event="tcp_data_queue", fn_name="kprobe_tcp_data_queue")
 ```
 Attaches the defined kprobe functions to specific events in the kernel.
 
-6.Print trace output:
+6. Print trace output:
 
 ```python
 print("Tracing packet delay... Hit Ctrl-C to end.")
