@@ -1,5 +1,71 @@
 # BPF-Tracing
 
+**Python Code Description**
+
+This Python script is using BPF (Berkley Packet Filter) to trace the delay of network packets as they traverse different layers of the network stack in the Linux kernel. It leverages the BCC (BPF Compiler Collection) library for working with BPF programs in Python.
+
+Here's a breakdown of the code:
+
+1.Import BPF from bcc:
+
+```python
+from bcc import BPF
+```
+
+2.Define the BPF program:
+
+```python
+bpf_code = """
+#include <linux/skbuff.h>
+
+struct metadata {
+    u64 receive_ts;
+};
+
+BPF_HASH(start, struct sk_buff *);
+
+// ... (kprobe functions)
+"""
+```
+The BPF program includes necessary kernel headers and defines a data structure (`struct metadata`) and a BPF hash map (`start`) to store the timestamps of packet receptions.
+
+3.Define kprobe functions:
+
+-`kprobe__eth_type_trans`: Traces the entry point of the `eth_type_trans` function and prints the delay from interface to the data link layer.
+-`kprobe_ip_rcv`: Traces the entry point of the `ip_rcv` function and prints the delay from the data link layer to the network layer.
+-`kprobe__ip_local_deliver`: Traces the entry point of the `ip_local_deliver` function and prints the delay from the network layer to the transport layer.
+-`kprobe_tcp_data_queue`: Traces the entry point of the `tcp_data_queue` function and prints the delay from the transport layer to the application layer.
+
+4.Load the BPF program:
+
+```python
+bpf = BPF(text=bpf_code)
+```
+
+5.Attach kprobes:
+
+```python
+bpf.attach_kprobe(event="eth_type_trans", fn_name="kprobe__eth_type_trans")
+bpf.attach_kprobe(event="ip_rcv", fn_name="kprobe_ip_rcv")
+bpf.attach_kprobe(event="ip_local_deliver", fn_name="kprobe__ip_local_deliver")
+bpf.attach_kretprobe(event="tcp_data_queue", fn_name="kprobe_tcp_data_queue")
+```
+Attaches the defined kprobe functions to specific events in the kernel.
+
+6.Print trace output:
+
+```python
+print("Tracing packet delay... Hit Ctrl-C to end.")
+bpf.trace_print()
+```
+
+Initiates the tracing and prints the output, displaying the delays at different network layers.
+
+The script captures timestamps when packets traverse different layers of the network stack and calculates and prints the delays at each stage in microseconds. The output includes the packet ID and the corresponding delay for each traced event.
+
+Note: The script may require elevated privileges to run because it interacts with the kernel. Additionally, it might need adjustments based on the specific kernel version and the availability of the traced functions.
+
+
 **Characterizing Network Stack Latency Using eBPF**
 
 **Project Summary:**
