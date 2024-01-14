@@ -1,0 +1,482 @@
+# Below you can see the border between layers in stack TCP/IP.
+# tracer: function_graph
+ ------------------------------------------
+   1)  Rendere-2543  =>  WRRende-2597 
+ ------------------------------------------
+
+   1)               |  ip_rcv() {                               # (Network_layer)It performs some initial processing, such as checking the packet's checksum and routing information.
+   1)   1.522 us    |    ip_rcv_core();                         # It handles tasks such as fragment reassembly, protocol identification, and delivery to the appropriate application.                                       
+   1)               |    ip_rcv_finish_core.constprop.0() {     # ip_input.c line-412
+   1)               |      tcp_v4_early_demux() {               # ip_input-line-325-tcp-ipv4-1621-It is responsible for de-muxing TCP packets to the appropriate socket as early as possible in the processing chain. This can improve performance by reducing the amount of processing that needs to be done on packets that are not destined for the local host.
+   1)               |        __inet_lookup_established() {      # This function is called from tcp_v4_early_demux() to look up an existing TCP connection. It uses a hash table to quickly find the connection that matches the packet's source and destination addresses and ports.
+   1)   0.725 us    |          inet_ehashfn();                  # This function is called from __inet_lookup_established() to calculate the hash value for the TCP connection's key. This hash value is used to index into the hash table.
+   1)   2.683 us    |        }
+   1)   0.733 us    |        ipv4_dst_check();
+   1)   6.367 us    |      }
+   1)   8.663 us    |    }
+   1)               |    ip_local_deliver() {                   # ip_input line-240 It is responsible for delivering packets to their destination protocol handler. This can involve reassembling IP fragments, calling the appropriate protocol handler, and handling Netfilter hooks.
+   1)               |      ip_local_deliver_finish() {          # ip_input line-226 This code  is part of the IP local delivery finish function in the Linux kernel. It is responsible for delivering packets to their destination protocol handler after reassembly and Netfilter processing.
+   1)   0.579 us    |        __rcu_read_lock();                 # ip_input line-230 This function is called from ip_local_deliver_finish() to acquire a read lock. The read lock is used to protect the data structures that are accessed during the packet processing from being modified by other threads.
+   1)               |        ip_protocol_deliver_rcu() {        # (Transport layer) ip_input line-231-187 The code calls the ip_protocol_deliver_rcu() function to deliver the packet to the appropriate local protocol handler. This function takes the network, the packet, and the protocol number as arguments.also check the policy
+   1)               |          raw_local_deliver() {            # raw.c-line-207     line-215-check the policy and ip dont exist the protocol hanler sent the icmp message.
+   1)               |            raw_v4_input() {               # raw.c-169 This code snippet is part of the raw_v4_input function in the Linux kernel. It is responsible for delivering packets to raw sockets that match the protocol of the packet.The packet's protocol is not ICMP or the ICMP filter allows the packet. The packet is a multicast packet and the destination address and source address match the socket's filter criteria. The packet was received on the interface associated with the socket.
+   1)   0.595 us    |              __rcu_read_lock();
+   1)   0.643 us    |              __rcu_read_unlock();
+   1)   3.137 us    |            }
+   1)   4.339 us    |          }
+   1)               |          tcp_v4_rcv() {                   # ip_input line-204 tcp-v4-1808 The INDIRECT_CALL_2() macro will call the function pointed to by ipprot->handler, passing it the arguments tcp_v4_rcv, udp_rcv, and skb. The function that is called will then handle the packet according to its specific protocol.
+   1)               |            tcp_inbound_md5_hash() {         This function is called from raw_local_deliver() to handle packets that are destined for TCP connections. It performs further processing of the packet, such as TCP connection management and data delivery.
+   1)   0.638 us    |              tcp_parse_md5sig_option();
+   1)   2.035 us    |            }
+   1)               |            tcp_filter() {                 # tcp-v4-1768 The code filters the packet to see if it should be accepted by the socket. If the packet is not accepted, it is discarded.
+   1)               |              sk_filter_trim_cap() {       # This function is called from tcp_filter() to check the packet's length against the socket's buffer size. If the packet is too large, it will be truncated to fit the buffer size.
+   1)               |                security_sock_rcv_skb() {  # The additional security filters can be used to enforce specific security policies, such as access control rules.
+   1)   0.619 us    |                  apparmor_socket_sock_rcv_skb();
+   1)   2.208 us    |                }
+   1)   0.607 us    |                __rcu_read_lock();
+   1)   0.701 us    |                __rcu_read_unlock();
+   1)   6.188 us    |              }
+   1)   7.477 us    |            }
+   1)   0.675 us    |            tcp_v4_fill_cb();              # tcp-v4-1904 The code fills in the TCP header and data fields of the SKB (socket buffer) with the appropriate information from the packet.
+   1)   0.603 us    |            _raw_spin_lock();
+   1)               |            tcp_v4_do_rcv() {              # tcp-v4-line-1548 It is responsible for processing incoming TCP packets and delivering them to the appropriate socket.
+   1)   0.627 us    |              ipv4_dst_check();            # explained in code
+   1)               |              tcp_rcv_established() {      # tcp-input-line-5544
+   1)               |                tcp_mstamp_refresh() {     # This function updates the timestamp of the TCP connection. This timestamp is used to calculate the round-trip time (RTT) of the connection.
+   1)   1.215 us    |                  ktime_get();
+   1)   2.505 us    |                }
+   1)               |                __skb_checksum_complete() { # This function calculates the checksum of the packet and verifies that it is correct.
+   1)               |                  __skb_checksum() {
+   1)   0.931 us    |                    csum_partial();
+   1)   2.298 us    |                  }
+   1)   3.507 us    |                }
+   1)   1.240 us    |                tcp_ack();
+   1)   0.623 us    |                tcp_urg();
+   1)               |                tcp_data_queue() {         # (Application layer) This function queues the data in the packet for processing by the application.
+                                                                  Queues incoming TCP data segments for processing
+   1)               |                  sk_forced_mem_schedule() {   # This function schedules memory allocation for the socket.
+   1)               |                    mem_cgroup_charge_skmem() {
+   1)               |                      try_charge_memcg() {
+   1)   0.659 us    |                        consume_stock();
+   1)   1.992 us    |                      }
+   1)               |                      __mod_memcg_state() {
+   1)   0.829 us    |                        cgroup_rstat_updated();
+   1)   2.415 us    |                      }
+   1)   6.301 us    |                    }
+   1)   7.624 us    |                  }
+   1)   0.763 us    |                  tcp_queue_rcv();         # Processes incoming TCP data segments, including sequence number checks, window size updates, data delivery, congestion control updates, and out-of-order segment handling
+   1)               |                  tcp_event_data_recv() {  # This function generates an event indicating that data has been received on the TCP connection.
+   1)   0.693 us    |                    tcp_grow_window();
+   1)   2.346 us    |                  }
+   1)               |                  tcp_data_ready() {       # This function marks the socket as readable.
+   1)               |                    sock_def_readable() {  # This function marks the socket as readable and wakes up any processes that are waiting for data to be available on the socket.
+   1)   0.611 us    |                      __rcu_read_lock();
+   1)               |                      __wake_up_sync_key() {
+   1)               |                        __wake_up_common_lock() {
+   1)   0.730 us    |                          _raw_spin_lock_irqsave();
+   1)               |                          __wake_up_common() {
+   1)               |                            pollwake() {         # This function is used to wake up processes that are waiting for events on the socket.
+   1)               |                              default_wake_function() {
+   1)               |                                try_to_wake_up() {
+   1)   0.912 us    |                                  _raw_spin_lock_irqsave();
+   1)               |                                  select_task_rq_fair() {
+   1)   0.520 us    |                                    __rcu_read_lock();
+   1)               |                                    select_idle_sibling() {
+   1)   0.575 us    |                                      available_idle_cpu();
+   1)   1.876 us    |                                    }
+   1)   0.688 us    |                                    __rcu_read_unlock();
+   1)   5.612 us    |                                  }
+   1)   0.733 us    |                                  ttwu_queue_wakelist();
+   1)               |                                  raw_spin_rq_lock_nested() {
+   1)   0.587 us    |                                    _raw_spin_lock();
+   1)   1.682 us    |                                  }
+   1)   0.933 us    |                                  update_rq_clock();
+   1)               |                                  ttwu_do_activate() {
+   1)               |                                    psi_task_change() {
+   1)   0.638 us    |                                      psi_flags_change();
+   1)               |                                      psi_group_change() {
+   1)   0.586 us    |                                        record_times();
+   1)   2.261 us    |                                      }
+   1)               |                                      psi_group_change() {
+   1)   0.604 us    |                                        record_times();
+   1)   2.609 us    |                                      }
+   1)               |                                      psi_group_change() {
+   1)   0.633 us    |                                        record_times();
+   1)   2.495 us    |                                      }
+   1)               |                                      psi_group_change() {
+   1)   0.585 us    |                                        record_times();
+   1)   2.209 us    |                                      }
+   1)               |                                      psi_group_change() {
+   1)   0.596 us    |                                        record_times();
+   1)   2.333 us    |                                      }
+   1)               |                                      psi_group_change() {
+   1)   0.594 us    |                                        record_times();
+   1)   1.891 us    |                                      }
+   1) + 19.994 us   |                                    }
+   1)               |                                    enqueue_task_fair() {
+   1)               |                                      enqueue_entity() {
+   1)               |                                        update_curr() {
+   1)   0.767 us    |                                          update_min_vruntime();
+   1)   0.772 us    |                                          cpuacct_charge();
+   1)               |                                          __cgroup_account_cputime() {
+   1)   0.585 us    |                                            cgroup_rstat_updated();
+   1)   1.775 us    |                                          }
+   1)   6.083 us    |                                        }
+   1)   0.970 us    |                                        __update_load_avg_se();
+   1)   0.808 us    |                                        __update_load_avg_cfs_rq();
+   1)   0.597 us    |                                        update_cfs_group();
+   1)   0.651 us    |                                        place_entity();
+   1) + 14.319 us   |                                      }
+   1)   0.905 us    |                                      __update_load_avg_se();
+   1)   0.720 us    |                                      __update_load_avg_cfs_rq();
+   1)               |                                      update_cfs_group() {
+   1)               |                                        reweight_entity() {
+   1)               |                                          update_curr() {
+   1)   0.622 us    |                                            __calc_delta();
+   1)   0.648 us    |                                            update_min_vruntime();
+   1)   3.123 us    |                                          }
+   1)   4.427 us    |                                        }
+   1)   5.618 us    |                                      }
+   1)   0.616 us    |                                      hrtick_update();
+   1) + 26.107 us   |                                    }
+   1)               |                                    ttwu_do_wakeup() {
+   1)               |                                      check_preempt_curr() {
+   1)   0.807 us    |                                        check_preempt_wakeup();
+   1)   2.094 us    |                                      }
+   1)   4.565 us    |                                    }
+   1) + 53.625 us   |                                  }
+   1)               |                                  raw_spin_rq_unlock() {
+   1)   0.603 us    |                                    _raw_spin_unlock();
+   1)   1.773 us    |                                  }
+   1)   0.608 us    |                                  _raw_spin_unlock_irqrestore();
+   1) + 71.748 us   |                                }
+   1) + 72.967 us   |                              }
+   1) + 74.420 us   |                            }
+   1) + 76.480 us   |                          }
+   1)   0.622 us    |                          _raw_spin_unlock_irqrestore();
+   1) + 80.238 us   |                        }
+   1) + 81.428 us   |                      }
+   1)   0.701 us    |                      __rcu_read_unlock();
+   1) + 85.321 us   |                    }
+   1) + 86.700 us   |                  }
+   1) ! 101.212 us  |                }
+   1)   0.829 us    |                tcp_check_space();       # (Transport) tcp-input-line-5218 called by tcp_data_snd_check and tcp_established.It is responsible for handling changes in the socket's receive queue space and notifying the application if the queue becomes empty or has sufficient space available.
+   1)               |                __tcp_ack_snd_check() {  # tcp-input-line5224  It is responsible for determining whether to send an acknowledgment (ACK) packet to the remote host.
+   1)               |                  tcp_send_ack() {       # If any of the conditions above are met, the code jumps to the send_now label and sends an ACK packet to the remote host. This ACK acknowledges the data received and informs the remote host that it can send more data.
+                                                              # This function is responsible for creating an ACK packet and sending it to the remote host. It involves allocating an SKB buffer using __tcp_send_ack.part.0(), constructing the ACK packet header and options, and transmitting the packet using __tcp_transmit_skb().
+   1)               |                    __tcp_send_ack.part.0() {  # This function is part of the tcp_send_ack() function and is responsible for allocating an SKB buffer to hold the ACK packet. It calls __alloc_skb() to allocate the SKB buffer and initializes the buffer with appropriate values.
+   1)               |                      __alloc_skb() {
+   1)               |                        kmem_cache_alloc_node() {
+   1)   0.589 us    |                          should_failslab();
+   1)   2.611 us    |                        }
+   1)               |                        kmalloc_reserve() {
+   1)               |                          kmalloc_size_roundup() {
+   1)   0.708 us    |                            kmalloc_slab();
+   1)   1.983 us    |                          }
+   1)               |                          __kmalloc_node_track_caller() {
+   1)   0.591 us    |                            kmalloc_slab();
+   1)               |                            __kmem_cache_alloc_node() {
+   1)   0.585 us    |                              should_failslab();
+   1)   2.317 us    |                            }
+   1)   4.660 us    |                          }
+   1)   8.409 us    |                        }
+   1)   0.590 us    |                        __build_skb_around();
+   1) + 14.046 us   |                      }
+   1)               |                      __tcp_transmit_skb() {   # This function is responsible for transmitting the ACK packet. It constructs the TCP header and options, updates the packet length, and transmits the packet using ip_queue_xmit().
+   1)   0.768 us    |                        tcp_established_options(); # This function fills in the TCP header options for an established connection, such as TCP timestamps and window scaling.
+   1)   0.611 us    |                        skb_push();              # this function advances the SKB's tail pointer to update the packet length after adding the IP header.
+   1)   0.859 us    |                        __tcp_select_window();   # This function calculates the current TCP window size for sending data.
+   1)   0.816 us    |                        tcp_options_write();     # This function writes the TCP header options to the SKB's data buffer.
+   1)   0.609 us    |                        bpf_skops_write_hdr_opt.isra.0(); 
+   1)   0.686 us    |                        tcp_v4_send_check();     # This function calculates the TCP checksum for the ACK packet and updates the checksum field in the TCP header.
+   1)               |                        ip_queue_xmit() {        # (Network layer) This function queues the ACK packet for transmission to the network interface.
+   1)               |                          __ip_queue_xmit() {
+   1)   0.571 us    |                            __rcu_read_lock();
+   1)               |                            __sk_dst_check() {   # This function checks whether the socket has a valid destination entry (dst) and updates it if necessary.
+   1)   0.786 us    |                              ipv4_dst_check();
+   1)   2.213 us    |                            }
+   1)   0.690 us    |                            skb_push();         
+   1)               |                            ip_local_out() {      #  It performs various tasks related to sending the packet locally, such as updating the IPv4 header checksum, calling network device-specific output functions, and handling fragmentation if necessary.
+   1)               |                              __ip_local_out() {
+   1)   0.606 us    |                                ip_send_check();
+   1)   1.903 us    |                              }
+   1)               |                              ip_output() {       # This function routes the packet through the routing table to determine the next hop, and then hands off the packet to the appropriate network device driver for transmission.
+   1)   0.773 us    |                                __rcu_read_lock();    
+   1)               |                                nf_hook_slow() {
+   1)   0.679 us    |                                  apparmor_ip_postroute();
+   1)   2.471 us    |                                }
+   1)   0.616 us    |                                __rcu_read_unlock();
+   1)               |                                ip_finish_output() {   # This function performs cleanup tasks after the packet has been queued for transmission to the network device.
+   1)               |                                  __ip_finish_output() {
+   1)               |                                    ip_finish_output2() {
+   1)               |                                      __dev_queue_xmit() {  # (Data link) This function is the network device driver's entry point for handling outgoing packets. It queues the packet in the device's transmit queue and initiates the transmission process.
+   1)   0.805 us    |                                        qdisc_pkt_len_init();
+   1)   0.680 us    |                                        netdev_core_pick_tx(); # This function selects the appropriate transmit (TX) function for the network device based on the device's capabilities and configuration.
+   1)   0.770 us    |                                        _raw_spin_lock();
+   1)               |                                        sch_direct_xmit() {    # This function is responsible for transmitting the packet directly without going through any traffic shaping or queuing disciplines. It is typically used for low-latency traffic or when traffic shaping is not enabled.
+   1)   0.608 us    |                                          _raw_spin_unlock();
+   1)               |                                          validate_xmit_skb_list() {
+   1)               |                                            validate_xmit_skb() {
+   1)               |                                              netif_skb_features() {  # This function determines the hardware offload capabilities of the network device for the given packet. This information is used to optimize the packet transmission process.
+   1)   0.676 us    |                                                skb_network_protocol();
+   1)   2.209 us    |                                              }
+   1)               |                                              skb_csum_hwoffload_help() {
+   1)               |                                                skb_checksum_help() {
+   1)               |                                                  skb_checksum() {
+   1)               |                                                    __skb_checksum() {
+   1)   0.653 us    |                                                      csum_partial();
+   1)   1.925 us    |                                                    }
+   1)   3.100 us    |                                                  }
+   1)   0.691 us    |                                                  skb_ensure_writable();
+   1)   5.884 us    |                                                }
+   1)   7.388 us    |                                              }
+   1)   0.706 us    |                                              validate_xmit_xfrm();
+   1) + 13.445 us   |                                            }
+   1) + 14.720 us   |                                          }
+   1)   0.606 us    |                                          _raw_spin_lock();
+   1)               |                                          dev_hard_start_xmit() {
+   1)               |                                            pcnet32_start_xmit [pcnet32]() {
+   1)   0.727 us    |                                              _raw_spin_lock_irqsave();
+   1)   0.664 us    |                                              is_vmalloc_addr();
+   1)   0.843 us    |                                              dma_map_page_attrs();
+   1) + 70.048 us   |                                              pcnet32_wio_write_csr [pcnet32]();
+   1)   0.805 us    |                                              _raw_spin_unlock_irqrestore();
+   1) + 78.178 us   |                                            }
+   1) + 79.867 us   |                                          }
+   1)   0.608 us    |                                          _raw_spin_unlock();
+   1)   0.715 us    |                                          _raw_spin_lock();
+   1) ! 101.797 us  |                                        }
+   1)               |                                        __qdisc_run() {
+   1)               |                                          dequeue_skb() {
+   1)   0.730 us    |                                            fq_codel_dequeue [sch_fq_codel]();
+   1)   2.821 us    |                                          }
+   1)   5.942 us    |                                        }
+   1)   0.569 us    |                                        _raw_spin_unlock();
+   1)   0.551 us    |                                        __local_bh_enable_ip();
+   1) ! 141.195 us  |                                      }
+   1)   0.600 us    |                                      __local_bh_enable_ip();
+   1) ! 145.098 us  |                                    }
+   1) ! 146.836 us  |                                  }
+   1) ! 148.235 us  |                                }
+   1) ! 155.415 us  |                              }
+   1) ! 159.317 us  |                            }
+   1)   0.584 us    |                            __rcu_read_unlock();
+   1) ! 167.607 us  |                          }
+   1) ! 168.776 us  |                        }
+   1) ! 179.324 us  |                      }
+   1) ! 195.318 us  |                    }
+   1) ! 196.638 us  |                  }
+   1) ! 198.352 us  |                }
+   1) ! 314.410 us  |              }
+   1) ! 317.186 us  |            }
+   1)   0.697 us    |            _raw_spin_unlock();
+   1) ! 334.566 us  |          }
+   1) ! 341.202 us  |        }
+   1)   1.075 us    |        __rcu_read_unlock();
+   1) ! 345.342 us  |      }
+   1) ! 346.500 us  |    }
+   1) ! 363.723 us  |  }
+   1)               |  ip_rcv() {
+   1)   0.758 us    |    ip_rcv_core();
+   1)               |    ip_rcv_finish_core.constprop.0() {
+   1)               |      tcp_v4_early_demux() {
+   1)               |        __inet_lookup_established() {
+   1)   0.605 us    |          inet_ehashfn();
+   1)   2.341 us    |        }
+   1)   0.704 us    |        ipv4_dst_check();
+   1)   5.213 us    |      }
+   1)   6.892 us    |    }
+   1)               |    ip_local_deliver() {
+   1)               |      ip_local_deliver_finish() {
+   1)   0.562 us    |        __rcu_read_lock();
+   1)               |        ip_protocol_deliver_rcu() {
+   1)               |          raw_local_deliver() {
+   1)               |            raw_v4_input() {
+   1)   0.561 us    |              __rcu_read_lock();
+   1)   0.730 us    |              __rcu_read_unlock();
+   1)   3.089 us    |            }
+   1)   4.158 us    |          }
+   1)               |          tcp_v4_rcv() {
+   1)               |            tcp_inbound_md5_hash() {
+   1)   0.559 us    |              tcp_parse_md5sig_option();
+   1)   1.692 us    |            }
+   1)               |            tcp_filter() {
+   1)               |              sk_filter_trim_cap() {
+   1)               |                security_sock_rcv_skb() {
+   1)   0.582 us    |                  apparmor_socket_sock_rcv_skb();
+   1)   1.875 us    |                }
+   1)   0.563 us    |                __rcu_read_lock();
+   1)   0.592 us    |                __rcu_read_unlock();
+   1)   5.467 us    |              }
+   1)   6.604 us    |            }
+   1)   0.584 us    |            tcp_v4_fill_cb();
+   1)   0.603 us    |            _raw_spin_lock();
+   1)               |            tcp_v4_do_rcv() {
+   1)   0.755 us    |              ipv4_dst_check();
+   1)               |              tcp_rcv_established() {
+   1)               |                tcp_mstamp_refresh() {
+   1)   0.933 us    |                  ktime_get();
+   1)   2.077 us    |                }
+   1)               |                __skb_checksum_complete() {
+   1)               |                  __skb_checksum() {
+   1)   0.661 us    |                    csum_partial();
+   1)   1.802 us    |                  }
+   1)   2.941 us    |                }
+   1)               |                tcp_queue_rcv() {
+   1)               |                  tcp_try_coalesce() {
+   1)               |                    skb_try_coalesce() {
+   1)   0.887 us    |                      skb_copy_bits();
+   1)   2.246 us    |                    }
+   1)   3.666 us    |                  }
+   1)   5.033 us    |                }
+   1)   0.822 us    |                tcp_event_data_recv();
+   1)               |                __tcp_ack_snd_check() {
+   1)               |                  tcp_send_ack() {
+   1)               |                    __tcp_send_ack.part.0() {
+   1)               |                      __alloc_skb() {
+   1)               |                        kmem_cache_alloc_node() {
+   1)   0.547 us    |                          should_failslab();
+   1)   2.004 us    |                        }
+   1)               |                        kmalloc_reserve() {
+   1)               |                          kmalloc_size_roundup() {
+   1)   0.563 us    |                            kmalloc_slab();
+   1)   1.653 us    |                          }
+   1)               |                          __kmalloc_node_track_caller() {
+   1)   0.569 us    |                            kmalloc_slab();
+   1)               |                            __kmem_cache_alloc_node() {
+   1)   0.545 us    |                              should_failslab();
+   1)   2.007 us    |                            }
+   1)   4.231 us    |                          }
+   1)   7.489 us    |                        }
+   1)   0.576 us    |                        __build_skb_around();
+   1) + 12.298 us   |                      }
+   1)               |                      __tcp_transmit_skb() {
+   1)   0.666 us    |                        tcp_established_options();
+   1)   0.544 us    |                        skb_push();
+   1)   0.788 us    |                        __tcp_select_window();
+   1)   0.627 us    |                        tcp_options_write();
+   1)   0.589 us    |                        bpf_skops_write_hdr_opt.isra.0();
+   1)   0.645 us    |                        tcp_v4_send_check();
+   1)               |                        ip_queue_xmit() {
+   1)               |                          __ip_queue_xmit() {
+   1)   0.558 us    |                            __rcu_read_lock();
+   1)               |                            __sk_dst_check() {
+   1)   0.590 us    |                              ipv4_dst_check();
+   1)   1.705 us    |                            }
+   1)   0.552 us    |                            skb_push();
+   1)               |                            ip_local_out() {
+   1)               |                              __ip_local_out() {
+   1)   0.658 us    |                                ip_send_check();
+   1)   1.889 us    |                              }
+   1)               |                              ip_output() {
+   1)   0.555 us    |                                __rcu_read_lock();
+   1)               |                                nf_hook_slow() {
+   1)   0.603 us    |                                  apparmor_ip_postroute();
+   1)   2.016 us    |                                }
+   1)   0.617 us    |                                __rcu_read_unlock();
+   1)               |                                ip_finish_output() {
+   1)               |                                  __ip_finish_output() {
+   1)               |                                    ip_finish_output2() {
+   1)               |                                      __dev_queue_xmit() {
+   1)   0.600 us    |                                        qdisc_pkt_len_init();
+   1)   0.595 us    |                                        netdev_core_pick_tx();
+   1)   0.589 us    |                                        _raw_spin_lock();
+   1)               |                                        sch_direct_xmit() {
+   1)   0.571 us    |                                          _raw_spin_unlock();
+   1)               |                                          validate_xmit_skb_list() {
+   1)               |                                            validate_xmit_skb() {
+   1)               |                                              netif_skb_features() {
+   1)   0.609 us    |                                                skb_network_protocol();
+   1)   1.817 us    |                                              }
+   1)               |                                              skb_csum_hwoffload_help() {
+   1)               |                                                skb_checksum_help() {
+   1)               |                                                  skb_checksum() {
+   1)               |                                                    __skb_checksum() {
+   1)   0.579 us    |                                                      csum_partial();
+   1)   1.647 us    |                                                    }
+   1)   2.778 us    |                                                  }
+   1)   0.563 us    |                                                  skb_ensure_writable();
+   1)   4.949 us    |                                                }
+   1)   6.133 us    |                                              }
+   1)   0.587 us    |                                              validate_xmit_xfrm();
+   1) + 10.912 us   |                                            }
+   1) + 12.139 us   |                                          }
+   1)   0.596 us    |                                          _raw_spin_lock();
+   1)               |                                          dev_hard_start_xmit() {
+   1)               |                                            pcnet32_start_xmit [pcnet32]() {
+   1)   0.735 us    |                                              _raw_spin_lock_irqsave();
+   1)   0.563 us    |                                              is_vmalloc_addr();
+   1)   0.616 us    |                                              dma_map_page_attrs();
+   1) + 38.944 us   |                                              pcnet32_wio_write_csr [pcnet32]();
+   1)   0.722 us    |                                              _raw_spin_unlock_irqrestore();
+   1) + 46.308 us   |                                            }
+   1) + 47.795 us   |                                          }
+   1)   0.546 us    |                                          _raw_spin_unlock();
+   1)   0.594 us    |                                          _raw_spin_lock();
+   1) + 66.070 us   |                                        }
+   1)               |                                        __qdisc_run() {
+   1)               |                                          dequeue_skb() {
+   1)   0.563 us    |                                            fq_codel_dequeue [sch_fq_codel]();
+   1)   1.913 us    |                                          }
+   1)   2.999 us    |                                        }
+   1)   0.558 us    |                                        _raw_spin_unlock();
+   1)   0.677 us    |                                        __local_bh_enable_ip();
+   1) + 77.169 us   |                                      }
+   1)   0.564 us    |                                      __local_bh_enable_ip();
+   1) + 80.115 us   |                                    }
+   1) + 81.523 us   |                                  }
+   1) + 82.858 us   |                                }
+   1) + 88.927 us   |                              }
+   1) + 92.526 us   |                            }
+   1)   0.545 us    |                            __rcu_read_unlock();
+   1) ! 100.022 us  |                          }
+   1) ! 101.063 us  |                        }
+   1) ! 109.756 us  |                      }
+   1) ! 123.996 us  |                    }
+   1) ! 125.101 us  |                  }
+   1) ! 126.401 us  |                }
+   1)               |                kfree_skb_partial() {
+   1)   0.670 us    |                  skb_release_head_state();
+   1)               |                  skb_release_data() {
+   1)               |                    skb_free_head() {
+   1)               |                      kfree() {
+   1)   0.751 us    |                        __kmem_cache_free();
+   1)   2.444 us    |                      }
+   1)   3.568 us    |                    }
+   1)   5.130 us    |                  }
+   1)               |                  kfree_skbmem() {
+   1)   1.583 us    |                    kmem_cache_free();
+   1)   3.057 us    |                  }
+   1) + 11.225 us   |                }
+   1)               |                tcp_data_ready() {
+   1)               |                  sock_def_readable() {
+   1)   0.598 us    |                    __rcu_read_lock();
+   1)               |                    __wake_up_sync_key() {
+   1)               |                      __wake_up_common_lock() {
+   1)   1.363 us    |                        _raw_spin_lock_irqsave();
+   1)               |                        __wake_up_common() {
+   1)               |                          pollwake() {
+   1)               |                            default_wake_function() {
+   1)               |                              try_to_wake_up() {
+   1)   0.765 us    |                                _raw_spin_lock_irqsave();
+   1)   0.796 us    |                                _raw_spin_unlock_irqrestore();
+   1)   3.203 us    |                              }
+   1)   4.503 us    |                            }
+   1)   5.786 us    |                          }
+   1)   7.348 us    |                        }
+   1)   0.525 us    |                        _raw_spin_unlock_irqrestore();
+   1) + 11.877 us   |                      }
+   1) + 13.107 us   |                    }
+   1)   0.487 us    |                    __rcu_read_unlock();
+   1) + 16.455 us   |                  }
+   1) + 17.678 us   |                }
+   1) ! 171.204 us  |              }
+   1) ! 173.723 us  |            }
+   1)   0.460 us    |            _raw_spin_unlock();
+   1) ! 188.070 us  |          }
+   1) ! 194.007 us  |        }
+   1)   0.458 us    |        __rcu_read_unlock();
+   1) ! 196.926 us  |      }
+   1) ! 197.919 us  |    }
+   1) ! 208.202 us  |  }
+ ------------------------------------------

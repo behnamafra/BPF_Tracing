@@ -1,0 +1,100 @@
+show the version of the linux ubuntu
+- cat /etc/os-release
+- lsb_release -a
+- hostnamectl
+show the kernel version of the linux ubuntu
+--> uname -r
+------------------------
+Install lttng
+- apt-get install lttng-tools
+- apt-get install lttng-modules-dkms
+- apt-get install liblttng-ust-dev
+------------------------
+Install the Trace Compass
+First you should download the file of tracecompass from this link:
+https://www.eclipse.org/downloads/download.php?file=/tracecompass/releases/9.1.0/rcp/trace-compass-9.1.0-20230918-1643-linux.gtk.x86_64.tar.gz&mirror_id=17
+Then
+Install the package of the java17 with this command:
+- sudo apt install openjdk-17-jdk -y
+Now :
+You can run the tracecompass with this command in the below path:
+- root@VM-linux1:/home/behnam/Desktop/trace-compass# ./tracecompass
+------------------------
+- sudo apt-get -y install eclipse-tracecompass
+Remove the Trace Compass
+- sudo apt-get -y autoremove eclipse-tracecompass
+Remove eclipse-tracecompass configuration, data, and all of its dependencies
+- sudo apt-get -y autoremove --purge eclipse-tracecompass
+Remove eclipse-tracecompass Configurations and Data
+- sudo apt-get -y purge eclipse-tracecompass
+
+------------------------
+We can install the perf tools with the below command.
+
+- apt-get update && apt-get -y install linux-tools-generic
+
+after install the perf for solve the error that hapended you must type the below command.
+
+for root access : - alias perf=$(find /usr/lib/linux-tools/*/perf | head -1)
+for user : - sudo ln -s "$(find /usr/lib/linux-tools/*/perf | head -1)" /usr/local/bin/perf
+------------------------
+explain the perf tool
+
+https://phoenixnap.com/kb/linux-perf
+------------------------
+cd /sys/kernel/debug/tracing
+cat function_profile_enabled
+
+cat available_tracers
+output > timerlat osnoise hwlat blk mmiotrace function_graph wakeup_dl wakeup_rt wakeup function nop
+available_tracers is nop means only it show me events
+echo function-graph > current_tracer
+cat current_tracer
+Output > function-graph
+
+Now we can do function-graph tracing
+------------------------
+clean the trace
+- echo > trace
+------------------------
+All of the kernel functions or drivers or modules that can trace all of them
+- cat available_filter_functions < or > cat /proc/kallsyms
+------------------------
+All of the function related TCP
+- grep tcp available_filter_functions 
+------------------------
+When you use the following command, network functions are called more often than other functions, and you can identify network functions.
+
+- hping3 -c 30000 -d 120 -S -w 64 -p 80 --flood 127.0.0.1
+
+- cat set_ftrace_filter
+- echo 'tcp*' > set_ftrace_filter
+
+Now we are ready for function_profile tracing
+
+echo 1 > function_profile_enabled
+then
+echo 0 > function_profile_enabled
+then 
+Go to the address "/sys/kernel/debug/tracing/trace_stat"
+then
+cat function0 | less > /home/behnam/Desktop/function_profile.txt
+------------------------
+In 'trace_stat' we have some function that show me functions that happended on each CPU
+------------------------
+enable and disable > for counts is <function_profile_enable>
+enable and disable > for  <tracing_on>
+
+echo 0 > function_profile_enable : disabled
+echo 1 > function_profile_enable : enable
+------------------------
+echo > trace : and clean the all buffers
+
+
+
+
+
+
+
+
+
