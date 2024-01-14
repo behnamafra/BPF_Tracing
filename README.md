@@ -81,9 +81,104 @@ The BPF program includes necessary kernel headers and defines a data structure (
 3.Define kprobe functions:
 
 -`kprobe__eth_type_trans`: Traces the entry point of the `eth_type_trans` function and prints the delay from interface to the data link layer.
+
 -`kprobe_ip_rcv`: Traces the entry point of the `ip_rcv` function and prints the delay from the data link layer to the network layer.
+
 -`kprobe__ip_local_deliver`: Traces the entry point of the `ip_local_deliver` function and prints the delay from the network layer to the transport layer.
+
 -`kprobe_tcp_data_queue`: Traces the entry point of the `tcp_data_queue` function and prints the delay from the transport layer to the application layer.
+
+```python
+// Define a BPF hash map named 'start' with keys of type 'struct sk_buff *'
+BPF_HASH(start, struct sk_buff *);
+
+// Kprobe function for 'eth_type_trans'
+int kprobe__eth_type_trans(struct pt_regs *ctx, struct sk_buff *skb) {
+    // Get the current timestamp in nanoseconds
+    u64 ts = bpf_ktime_get_ns();
+
+    // Print the delay from Interface to Data Link layer and the packet ID
+    bpf_trace_printk("Interface to Datalink delay: %llu us\\n, Packet ID: %p\\n", ts, skb);
+
+    // Save the receive timestamp in the 'start' map
+    start.update(&skb, &ts);
+
+    return 0;
+}
+
+// Kprobe function for 'ip_rcv' (Data Link Layer to Network)
+int kprobe_ip_rcv(struct pt_regs *ctx, struct sk_buff *skb) {
+    // Lookup the receive timestamp in the 'start' map using the packet ID
+    u64 *start_ts = start.lookup(&skb);
+
+    if (start_ts != NULL) {
+        // Calculate the delay from Data Link to Network layer
+        u64 delta = bpf_ktime_get_ns() - *start_ts;
+        
+        // Convert delta to microseconds
+        delta /= 1000;
+
+        // Output the packet delay and the packet ID
+        bpf_trace_printk("Data Link to Network delay: %llu us\\n, Packet ID: %p\\n", delta, skb);
+
+        // Update the 'start' map with the current timestamp
+        u64 ts = bpf_ktime_get_ns();
+        start.update(&skb, &ts);
+    }
+
+    return 0;
+}
+
+// Kprobe function for 'ip_local_deliver' (Network Layer to Transport)
+int kprobe__ip_local_deliver(struct pt_regs *ctx, struct sk_buff *skb) {
+    // Lookup the receive timestamp in the 'start' map using the packet ID
+    u64 *start_ts = start.lookup(&skb);
+
+    if (start_ts != NULL) {
+        // Calculate the delay from Network to Transport layer
+        u64 delta = bpf_ktime_get_ns() - *start_ts;
+        
+        // Convert delta to microseconds
+        delta /= 1000;
+
+        // Output the packet delay and the packet ID
+        bpf_trace_printk("Network to Transport delay: %llu us\\n, Packet ID: %p\\n", delta, skb);
+
+        // Update the 'start' map with the current timestamp
+        u64 ts = bpf_ktime_get_ns();
+        start.update(&skb, &ts);
+    }
+
+    return 0;
+}
+
+// Kprobe function for 'tcp_data_queue' (Transport Layer to Application)
+int kprobe_tcp_data_queue(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb) {
+    // Lookup the receive timestamp in the 'start' map using the packet ID
+    u64 *start_ts = start.lookup(&skb);
+
+    // Print a message indicating Transport Layer to Application delay and the packet ID
+    bpf_trace_printk("Transport Layer to Application delay: Packet ID: %p\\n", skb);
+
+    if (start_ts != NULL) {
+        // Calculate the delay from Transport to Application layer
+        u64 delta = bpf_ktime_get_ns() - *start_ts;
+        
+        // Convert delta to microseconds
+        delta /= 1000;
+
+        // Output the packet delay and the packet ID
+        bpf_trace_printk("Transport to Application delay: %llu us\\n, Packet ID: %p\\n", delta, skb);
+
+        // Update the 'start' map with the current timestamp
+        u64 ts = bpf_ktime_get_ns();
+        start.update(&skb, &ts);
+    }
+
+    return 0;
+}
+"""
+```
 
 4.Load the BPF program:
 
