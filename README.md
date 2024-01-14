@@ -88,7 +88,7 @@ The BPF program includes necessary kernel headers and defines a data structure (
 
 -`kprobe_tcp_data_queue`: Traces the entry point of the `tcp_data_queue` function and prints the delay from the transport layer to the application layer.
 
-```console
+```c
 // Define a BPF hash map named 'start' with keys of type 'struct sk_buff *'
 BPF_HASH(start, struct sk_buff *);
 
@@ -177,7 +177,6 @@ int kprobe_tcp_data_queue(struct pt_regs *ctx, struct sock *sk, struct sk_buff *
 
     return 0;
 }
-"""
 ```
 
 4. Load the BPF program:
