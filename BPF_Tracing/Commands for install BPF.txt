@@ -1,0 +1,28 @@
+Install BPF:
+- sudo apt install bpftrace
+Show Tracepoints:
+- bpftrace -l 'tracepoint:tcp:*'
+-------------------
+netstat :
+- sudo apt install net-tools
+nstat :
+- sudo apt-get install ethtool
+--------------------
+ss :
+- ss -a | grep -E '^(tcp|udp)'
+-------------------
+To install sar
+- sudo apt install sysstat
+
+- service sysstat start
+- service sysstat restart
+- service sysstat status
+
+- sar -u
+-------------------
+sudo apt install nicstat
+nicstat 1
+ethtool -S ens33
+---------------------
+sudo apt-get install -y sockstat
+
