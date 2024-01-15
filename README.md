@@ -236,4 +236,58 @@ The script captures timestamps when packets traverse different layers of the net
 
 Note: The script may require elevated privileges to run because it interacts with the kernel. Additionally, it might need adjustments based on the specific kernel version and the availability of the traced functions.
 
+# Installation Requirements
 
+
+Before you can use this project, you need to install several programs. Here are the installation commands for each required program:
+
+### BPF
+Install BPF and show tracepoints with the following commands:
+```bash
+sudo apt install bpftrace
+bpftrace -l 'tracepoint:tcp:*'
+```
+
+### Netstat
+Install netstat with the following command:
+```bash
+sudo apt install net-tools
+```
+
+### Nstate
+Install nstate with the following command:
+```bash
+sudo apt-get install ethtool
+```
+
+### SS
+Use the following command to check socket statistics:
+```bash
+ss -a | grep -E '^(tcp|udp)'
+```
+
+### SAR
+Install SAR and check its status with the following commands:
+```bash
+sudo apt install sysstat
+service sysstat start
+service sysstat restart
+service sysstat status
+sar -u
+```
+
+### Nicstat
+Install nicstat and check network interface statistics with the following commands:
+```bash
+sudo apt install nicstat
+nicstat 1
+ethtool -S ens33
+```
+
+### Socketstat
+Install socketstat with the following command:
+```bash
+sudo apt-get install -y socketstat
+```
+
+Please make sure to replace `ens33` with your actual network interface name when running `ethtool -S ens33`.
