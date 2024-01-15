@@ -47,6 +47,34 @@ eBPF (extended Berkeley Packet Filter) is a powerful tool that plays a pivotal r
 
 5. **Efficiency**: eBPF is designed to run with minimal overhead, making it suitable for production environments where performance is critical.
 
+2.Methodology:
+
+The project began with a understanding of the different types of network delays, including transmission delay, propagation delay, queuing delay, and processing delay. This foundational knowledge was crucial in setting the stage for the subsequent steps.
+
+The next phase involved learning how to use eBPF (extended Berkeley Packet Filter) for network monitoring. eBPF is a powerful tool that provides granular insights into network behavior, including latency at various segments within the network stack. This understanding of eBPF was instrumental in achieving the objectives of the project.
+
+Another significant aspect of the project was measuring interrupt latency, which refers to the delay between the start of an Interrupt Request (IRQ) and the start of the respective Interrupt Service Routine (ISR). This measurement was vital in characterizing the overall network latency.
+
+Once these steps were completed, the project was implemented. This involved writing code that uses eBPF to monitor the latency of various segments in the network stack, including the time it takes for a packet to move from its arrival point to the IP layer, as well as the interrupt processing latency.
+
+After the project was implemented, it was thoroughly tested to ensure it was working as expected. Based on the results, the code was optimized to improve its performance. This systematic approach provided a detailed characterization of network latency and offered valuable insights for improving network performance and efficiency.
+
+
+Using eBPF to Monitor Network Latency
+
+eBPF (extended Berkeley Packet Filter) was used as a primary tool for monitoring network latency in this project. eBPF is a technology that allows for the creation of safe, efficient, and programmable hooks into the Linux kernel, providing a rich set of data that can be used to monitor network performance.
+
+In this project, eBPF was used to create probes at various points in the network stack. These probes were used to capture timestamps of when a packet arrived at each point. By comparing these timestamps, we were able to measure the latency between different stages of packet processing.
+
+The eBPF programs were loaded into the kernel, where they attached to various kernel functions related to network packet processing. When these functions were called, the eBPF programs were executed, capturing the necessary data.
+
+Measuring Interrupt Latency
+
+Interrupt latency refers to the time it takes from when an interrupt is triggered (such as when a packet arrives at the network interface card) to when the corresponding interrupt handler is run.
+
+In this project, interrupt latency was measured by creating an eBPF probe on the function in the kernel that handles the network card's interrupts. This probe captured a timestamp of when the interrupt occurred. Another eBPF probe was placed on the function that runs as a result of the interrupt, capturing a timestamp of when this function started running. The difference between these two timestamps gave the interrupt latency.
+
+This method provided a precise measurement of interrupt latency, contributing to  understanding of network latency in the project.
 
 
 **Python Code Description**
