@@ -334,11 +334,11 @@ The Application layer is the highest layer in the TCP/IP model. It represents th
 
 By tracing the delay at each of these layers, we can gain a deeper understanding of how data moves through the network stack and where potential performance issues might lie.
 
-to run the trace script :
+To run the python script and store the output:
 ```bash
 python trace_python.py > trace.txt
 ```
-Here's an example of what the output might look like:
+In the output file, we followed a SKB `00000000300a48ab` related to a packet and the calculated delay for each layer can be seen below:
 
 ```bash
 b' Socket Thread-2046 [000] d.s.1 11762.561815: bpf_trace_printk: Interface to Datalink delay: 11763348552477 us'
