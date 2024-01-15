@@ -291,3 +291,46 @@ sudo apt-get install -y socketstat
 ```
 
 Please make sure to replace `ens33` with your actual network interface name when running `ethtool -S ens33`.
+
+# Implementation and output review
+
+This project aims to characterize the latency of the network stack using eBPF (Extended Berkeley Packet Filter). eBPF is a technology that can run sandboxed programs in the Linux kernel without changing kernel source code or loading kernel modules. By making use of eBPF, we can safely and efficiently trace and profile the Linux kernel, which is otherwise a challenging task.
+
+## Running the Tracer
+
+The tracing process is initiated by running the `trace_python.py` file. This script starts the tracing process across all layers of the TCP/IP stack. The TCP/IP stack is the suite of protocols that computers use to communicate over the internet. 
+
+The tracing process begins with the downloading of a file. This action triggers a series of events across all layers of the TCP/IP stack. As each packet (or more precisely, each socket buffer, skb) traverses through the stack, the tracer logs the delay at each layer.
+
+The result of the trace is stored in the `trace.txt` file. This file contains logs of the delay at each layer of the TCP/IP stack for each skb that passes through. Each line in the log represents an skb passing through a layer of the TCP/IP stack. The delay of each pass is logged and visible in the output.
+
+## Understanding the Output
+
+The output logs the delay at different layers of the TCP/IP stack for each skb. The delay is logged in microseconds. The skb ID is also logged for reference.
+
+For example, the line `b' Socket Thread-2046 [000] d.s.1 11762.561815: bpf_trace_printk: Interface to Datalink delay: 11763348552477 us', SKB ID: 00000000300a48ab` is logging the delay at the Interface to Datalink layer. The delay is `11763348552477` microseconds for the skb with ID `00000000300a48ab`.
+
+This information can be used to characterize the latency of the network stack. By understanding the latency at each layer, we can identify potential bottlenecks and areas for improvement in the network stack.
+
+## Deep Dive into the Layers
+
+The TCP/IP model consists of four layers: the Network Interface, Internet, Transport, and Application layers. Each layer has a specific function and corresponds to one or more protocols. The layers work together to deliver data from one place to another over the internet.
+
+### Network Interface Layer
+
+The Network Interface layer (also known as the Link or Network Access layer) is the lowest layer of the TCP/IP model. Its job is to handle all the physical details of sending and receiving data, such as connecting to the network medium, encoding/decoding signals, and reading/writing bits. In the output, the delay at this layer is logged as "Interface to Datalink delay".
+
+### Internet Layer
+
+The Internet layer is responsible for sending packets across potentially multiple networks to their destination. It does this by using a logical addressing system (such as IP addresses) and by routing data to its destination. In the output, the delay at this layer is logged as "Network to Transport delay".
+
+### Transport Layer
+
+The Transport layer is responsible for providing communication sessions between computers. This is where protocols like TCP and UDP operate. These protocols provide features like error detection, congestion control, and connection handling. In the output, the delay at this layer is logged as "Transport Layer to Application delay".
+
+### Application Layer
+
+The Application layer is the highest layer in the TCP/IP model. It represents the level at which applications access network services. This layer includes protocols like HTTP, SMTP, and FTP.
+
+By tracing the delay at each of these layers, we can gain a deeper understanding of how data moves through the network stack and where potential performance issues might lie.
+
