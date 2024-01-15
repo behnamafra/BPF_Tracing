@@ -338,20 +338,17 @@ To run the python script and store the output:
 ```bash
 python trace_python.py > trace.txt
 ```
-In the output file, we followed a SKB `00000000300a48ab` related to a packet and the calculated delay for each layer can be seen below:
+In the output file, we followed a SKB `00000000300a48ab` related to a packet and the calculated delay for each layer can be seen below. One point that the file mentions is that the passage of this packet from the Datalink layer to the Network layer was not recorded and this may be because this packet did not pass through the kprobes we have done attach for any reason.
 
 ```bash
 b' Socket Thread-2046 [000] d.s.1 11762.561815: bpf_trace_printk: Interface to Datalink delay: 11763348552477 us'
 b', SKB ID: 00000000300a48ab'
 b''
-b' tracker-miner-f-1024 [000] d.s.1 11763.087359: bpf_trace_printk: Network to Transport delay: 92396 us'
-b', SKB ID: 00000000300a48ab'
-b''
 b' Backgro~Pool #1-2048 [000] d.s.1 11763.998184: bpf_trace_printk: Network to Transport delay: 1511 us'
 b', SKB ID: 00000000300a48ab'
 b''
-b' Backgro~Pool #1-2048 [000] d.s.1 11763.998207: bpf_trace_printk: Transport Layer to Application delay: SKB ID: 00000000300a48ab'
-b''
+b' Backgro~Pool #1-2048    [000] d.s.1 11763.998211: bpf_trace_printk: Transport to Application delay: 17 us'
+b', Packet ID: 00000000300a48ab'
 ```
 
 Each line represents an skb passing through a layer of the TCP/IP stack. The delay of each pass is logged and visible in the output.
