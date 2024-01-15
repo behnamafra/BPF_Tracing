@@ -334,3 +334,33 @@ The Application layer is the highest layer in the TCP/IP model. It represents th
 
 By tracing the delay at each of these layers, we can gain a deeper understanding of how data moves through the network stack and where potential performance issues might lie.
 
+to run the trace script :
+```bash
+python trace_python.py > trace.txt
+```
+Here's an example of what the output might look like:
+
+```bash
+b' Socket Thread-2046 [000] d.s.1 11762.561815: bpf_trace_printk: Interface to Datalink delay: 11763348552477 us'
+b', SKB ID: 00000000300a48ab'
+b''
+b' tracker-miner-f-1024 [000] d.s.1 11763.087359: bpf_trace_printk: Network to Transport delay: 92396 us'
+b', SKB ID: 00000000300a48ab'
+b''
+b' Backgro~Pool #1-2048 [000] d.s.1 11763.998184: bpf_trace_printk: Network to Transport delay: 1511 us'
+b', SKB ID: 00000000300a48ab'
+b''
+b' Backgro~Pool #1-2048 [000] d.s.1 11763.998207: bpf_trace_printk: Transport Layer to Application delay: SKB ID: 00000000300a48ab'
+b''
+```
+
+Each line represents an skb passing through a layer of the TCP/IP stack. The delay of each pass is logged and visible in the output.
+
+## Understanding the Output
+
+The output logs the delay at different layers of the TCP/IP stack for each skb. The delay is logged in microseconds. The skb ID is also logged for reference.
+
+For example, the line `b' Socket Thread-2046 [000] d.s.1 11762.561815: bpf_trace_printk: Interface to Datalink delay: 11763348552477 us', SKB ID: 00000000300a48ab` is logging the delay at the Interface to Datalink layer. The delay is `11763348552477` microseconds for the skb with ID `00000000300a48ab`.
+
+This information can be used to characterize the latency of the network stack.
+
